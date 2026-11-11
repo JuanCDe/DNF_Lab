@@ -335,8 +335,9 @@ output, time, .number, .metric dd, .chart { font-variant-numeric: tabular-nums; 
 .timeline-head h2, .capture-head h2 { font-size: var(--text-md); }
 .timeline-empty { padding-block: 8px; font-size: var(--text-sm); color: var(--muted); }
 .event-list {
+  --event-gap: 8px;
   display: flex;
-  gap: 8px;
+  gap: var(--event-gap);
   overflow-x: auto;
   overscroll-behavior-inline: contain;
   scroll-padding-inline: 4px;
@@ -345,6 +346,27 @@ output, time, .number, .metric dd, .chart { font-variant-numeric: tabular-nums; 
   list-style: none;
   scrollbar-color: var(--field-edge) var(--surface);
 }
+.event-list:has(.timeline-interval) { padding-block-start: calc(.75rem + 4px); }
+.timeline-interval {
+  position: absolute;
+  inset-block-end: calc(100% + 5px);
+  inset-inline-start: calc(-1px - var(--event-gap) / 2);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--quiet);
+  font: 400 .625rem/1.2 var(--font-mono);
+  white-space: nowrap;
+}
+.timeline-interval::before, .timeline-interval::after {
+  content: "";
+  inline-size: 6px;
+  block-size: 4px;
+  border-block-start: 1px solid var(--strong-line);
+}
+.timeline-interval::before { border-inline-start: 1px solid var(--strong-line); }
+.timeline-interval::after { border-inline-end: 1px solid var(--strong-line); }
 .event-cue {
   position: relative;
   flex: 0 0 168px;
@@ -881,6 +903,11 @@ dialog form { display: grid; gap: 12px; }
   .seekbar, .seekbar input { min-height: 44px; }
   #seek-marks { top: 12px; }
   .timeline-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .timeline-navigation {
+    grid-area: 1 / 1 / 2 / -1;
+    flex-wrap: wrap;
+    padding-inline-end: calc(2 * var(--control) + 8px);
+  }
   .timeline-tools { display: contents; }
   .timeline-scroll-controls { grid-row: 1; grid-column: 2; justify-self: end; }
   .timeline-tools .button { width: fit-content; font-size: var(--text-xs); }

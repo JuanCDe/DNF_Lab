@@ -280,8 +280,9 @@ function revealEvent(id, focus = false) {
 function revealCue(element) {
   const list = element.parentElement;
   const cue = element.getBoundingClientRect();
+  const left = element.querySelector('.timeline-interval')?.getBoundingClientRect().left ?? cue.left;
   const viewport = list.getBoundingClientRect();
-  if (cue.left < viewport.left) list.scrollLeft += cue.left - viewport.left - 4;
+  if (left < viewport.left) list.scrollLeft += left - viewport.left - 4;
   if (cue.right > viewport.right) list.scrollLeft += cue.right - viewport.right + 4;
 }
 function highlightTimeline(position) {

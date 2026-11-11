@@ -195,9 +195,17 @@ export function markerStatus(run, m) {
 export function timeline(run, m) {
   if (!run.events.length) return '<p class="timeline-empty">No events.' +
     (['video', 'legacy'].includes(run.origin) ? ' Use Add event to begin.' : '') + '</p>';
-  const entries = run.events.map(event => {
+  const entries = run.events.map((event, index) => {
     const type = event.type;
     const time = m.times.get(event.id);
+    const previous = run.events[index - 1];
+    const absolute = measured(previous?.t) && measured(event.t);
+    const from = absolute ? previous.t : m.times.get(previous?.id);
+    const to = absolute ? event.t : time;
+    const gap = measured(from) && measured(to) && to >= from ? to - from : null;
+    const interval = measured(gap)
+      ? `<time class="timeline-interval" datetime="PT${gap.toFixed(3)}S" title="Time since previous event">${num(gap, 3)} s</time>`
+      : '';
     const position = m.positions.get(type === 'r' ? event.wallId : event.id);
     const timestamp = measured(event.t) ? event.t : time;
     const review = type === 'm' && !event.contactConfirmed ? 'Review contact'
@@ -207,6 +215,7 @@ export function timeline(run, m) {
       type === 'p' ? m.classify[event.id] : ''].filter(Boolean).join(', ');
     const label = eventNames[type] + ', ' + (measured(timestamp) ? clock(timestamp, 3) : 'Untimed');
     return `<li class="event-cue event-${type}">
+      ${interval}
       <button type="button" class="timeline-seek" data-seek-event="${esc(event.id)}" aria-label="Jump to ${label}">
         <span class="event-icon">${icon(eventIcons[type])}</span><strong>${eventNames[type]}</strong>
         <time>${measured(timestamp) ? clock(timestamp, 3) : 'Untimed'}</time>
