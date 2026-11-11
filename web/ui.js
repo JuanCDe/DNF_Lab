@@ -120,7 +120,7 @@ export function chart(items, { label, unit, kind = 'bar', sex = '' }) {
     const x = dx(index);
     const axis = items.length <= 12 || index % Math.ceil(items.length / 12) === 0;
     const category = point.sex ?? sex;
-    const title = esc(`${point.name ?? point.label}, ${sexLabel(category)}, ${num(point.value)} ${unit}`);
+    const title = esc(`${point.name ?? point.label}, ${sexLabel(category)}, ${num(point.value)} ${unit}${point.dq ? ', Disqualified' : ''}`);
     const xLabel = axis ? `<text x="${x}" y="${bottom + 22}" text-anchor="middle">${esc(point.label.slice(0, 13))}</text>` : '';
     if (!measured(point.value)) {
       inLine = false;
@@ -132,7 +132,7 @@ export function chart(items, { label, unit, kind = 'bar', sex = '' }) {
     const shape = kind === 'line'
       ? `<circle cx="${x}" cy="${y}" r="5"/>`
       : `<rect x="${x - barWidth / 2}" y="${y}" width="${barWidth}" height="${Math.max(1, bottom - y)}" rx="3"/>`;
-    return `<g class="chart-point ${sexClass(category)}" tabindex="0" role="img" aria-label="${title}"><title>${title}</title>${shape}${items.length <= 10 ? `<text class="value" x="${x}" y="${y - 9}" text-anchor="middle">${num(point.value)}</text>` : ''}</g>${xLabel}`;
+    return `<g class="chart-point ${sexClass(category)}${point.dq ? ' disqualified' : ''}" tabindex="0" role="img" aria-label="${title}"><title>${title}</title>${shape}${items.length <= 10 ? `<text class="value" x="${x}" y="${y - 9}" text-anchor="middle">${num(point.value)}</text>` : ''}</g>${xLabel}`;
   }).join('');
   return `<div class="chart-scroll"><svg class="chart series${compact ? ' compact-series' : ''}"
     style="--series-width:${width}px" viewBox="0 0 ${width} 224" role="img" aria-label="${esc(label)} (${esc(unit)})"><text x="${left}" y="13">${esc(unit)}</text>${lines}${kind === 'line' ? `<path d="${path}" class="trend ${sexClass(sex)}"/>` : ''}${points}</svg></div>`;

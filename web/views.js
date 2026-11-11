@@ -306,7 +306,8 @@ export function athletesView(athletes, runs, state, competitionDate) {
   const allRuns = runs.filter(run => run.athleteId === athlete?.id);
   const attempts = orderedRuns(allRuns.filter(run => run.pool === state.pool), competitionDate);
   const measuredAttempts = attempts.map(run => [run, analyze(run)]);
-  const summary = measuredAttempts.filter(([r,m]) => m.finished && !r.dq && !m.inconsistent);
+  const summary = measuredAttempts.filter(([, m]) => m.finished && !m.inconsistent);
+  const disqualified = summary.filter(([r]) => r.dq).length;
   const run = attempts.find(r => r.id === state.runId) ?? summary[0]?.[0] ?? attempts[0];
   const counts = id => runs.filter(r => r.athleteId === id).length;
   return `
@@ -336,7 +337,7 @@ export function athletesView(athletes, runs, state, competitionDate) {
               <div class="attempt-item">
                 <button type="button" data-load-run="${esc(r.id)}" class="attempt">
                   <span><strong>${esc(r.competition || 'Untitled session')}</strong>
-                    <small>${date(competitionDate(r))} / ${m.finished ? sourceLabel(r) : 'Draft'}${r.dq ? ' / Disqualified' : ''}</small></span>
+                    <small>${date(competitionDate(r))} / ${m.finished ? sourceLabel(r) : 'Draft'}${r.dq ? ' / <span class="dq-label">Disqualified</span>' : ''}</small></span>
                   <span class="number">${unit(m.distance,'m')} <small>${clock(m.time,0)}</small></span>
                   ${icon('arrow')}
                 </button>
@@ -347,7 +348,7 @@ export function athletesView(athletes, runs, state, competitionDate) {
               </div>`).join('')}</div>` : empty('folder','No attempts in this pool', 'Choose another pool or start a new attempt.')}
           </section>
           <section class="panel profile-summary">
-            ${titleRow('Performance history', `${summary.length} ${summary.length === 1 ? 'attempt' : 'attempts'}`,
+            ${titleRow('Performance history', `${summary.length} ${summary.length === 1 ? 'attempt' : 'attempts'}${disqualified ? ' / ' + disqualified + ' disqualified' : ''}`,
               `<label class="history-metric">Metric <select id="history-metric">${options(Object.entries(historyMetrics).map(([key,[label]])=>[key,label]),state.metric)}</select></label>`)}
             <dl class="metrics bio-metrics">
               ${metric('Average distance', num(mean(summary.map(([,m])=>m.distance))), 'm')}
@@ -357,7 +358,7 @@ export function athletesView(athletes, runs, state, competitionDate) {
               ${metric('Average 100 m time', clock(mean(summary.map(([,m])=>m.fixed[100]?.time))))}
               ${metric('Meters per eq. cycle', num(mean(summary.map(([,m])=>m.metresPerEq))), 'm')}
             </dl>
-            ${chart([...summary].reverse().map(([r,m])=>({ label:competitionDate(r) || r.competition || 'Session', name: r.competition, value:techValue(m,state.metric) })), {label:historyMetrics[state.metric][0],unit:historyMetrics[state.metric][1],kind:'line',sex:athlete.sex})}
+            ${chart([...summary].reverse().map(([r,m])=>({ label:competitionDate(r) || r.competition || 'Session', name: r.competition, value:techValue(m,state.metric), dq:r.dq })), {label:historyMetrics[state.metric][0],unit:historyMetrics[state.metric][1],kind:'line',sex:athlete.sex})}
           </section>
           ${run ? profileAttempt(run,state.split,athlete.sex,competitionDate(run)) : ''}
         `
@@ -373,7 +374,7 @@ function profileAttempt(run, splitMode, sex, eventDate) {
   const rows = splitMode === '50' ? m.splits50 : m.splits;
   const measured100 = m.fixed[100];
   return `<section class="panel attempt-detail" aria-labelledby="attempt-review-title">
-    ${titleRow(esc(run.competition || 'Untitled session'), [eventDate && date(eventDate), sourceLabel(run)].filter(Boolean).join(' / '), `<div class="heading-actions">
+    ${titleRow(esc(run.competition || 'Untitled session'), [eventDate && date(eventDate), sourceLabel(run), run.dq && '<span class="dq-label">Disqualified</span>'].filter(Boolean).join(' / '), `<div class="heading-actions">
       <button class="text-button" type="button" data-jump-to="profile-attempts-title">Back to attempts</button>
       <button class="button secondary" type="button" data-load-run="${esc(run.id)}">${icon('video')} Open in Studio</button>
     </div>`, 'attempt-review-title')}
@@ -397,7 +398,7 @@ function profileAttempt(run, splitMode, sex, eventDate) {
 const compareFields = {
   name: { label: 'Athlete', get: row => row.athlete.name },
   maxDistance: { label: 'Max distance', get: row => row.maxDistance, unit: 'm', better: 1,
-    detail: 'Longest valid saved attempt in the selected pool, across competitions' },
+    detail: 'Longest analyzed distance in the selected pool, across competitions' },
   time: { label: 'Time', get: row => row.time, unit: 's', digits: 2, time: true, better: -1, splitOnly: true },
   speed: { label: 'Speed', get: row => row.speed, unit: 'm/s', digits: 3, better: 1, splitOnly: true },
   eq: { label: 'Eq. cycles', get: row => row.eq, unit: 'cycles', digits: 1 },
@@ -436,7 +437,8 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
     const keys = ['time','speed','eq','metresPerEq','secondsPerEq'];
     const values = state.mode === 'mean' ? Object.fromEntries(keys.map(key=>[key,mean(matched.map(m=>m[key]))])) : chosen;
     const distances = eligible.map(({total})=>total.distance).filter(positive);
-    return [{...values, athlete, maxDistance:distances.length ? Math.max(...distances) : null, run:chosen.run}];
+    const disqualified = state.mode === 'mean' ? matched.filter(item => item.run.dq).length : Number(Boolean(chosen.run.dq));
+    return [{...values, athlete, maxDistance:distances.length ? Math.max(...distances) : null, run:chosen.run, disqualified}];
   }).sort((a,b)=>a.athlete.name.localeCompare(b.athlete.name,'en') || a.athlete.id.localeCompare(b.athlete.id));
   const get = compareFields[state.sort].get;
   const rows = [...chartRows].sort((a,b) => {
@@ -500,7 +502,11 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
         <tbody>${rows.map(row=>`<tr>${compareColumns.map(([key,field])=>{
           const value = field.get(row);
           if (key === 'name') return `<th scope="row"><button class="table-person" type="button" data-view-athlete="${esc(row.athlete.id)}"
-            ${state.mode !== 'mean' ? `data-compare-run="${esc(row.run.id)}"` : ''} title="${esc(value)}">${avatar(row.athlete)}<strong>${esc(value)}</strong>${state.mode!=='mean' && row.run.dq ? '<small>DQ</small>' : ''}</button></th>`;
+            ${state.mode !== 'mean' ? `data-compare-run="${esc(row.run.id)}"` : ''} title="${esc(value)}">${avatar(row.athlete)}<strong>${esc(value)}</strong>${row.disqualified
+              ? state.mode === 'mean'
+                ? `<small title="Disqualified attempts included: ${row.disqualified}">incl. DQ</small>`
+                : '<small title="Disqualified">DQ</small>'
+              : ''}</button></th>`;
           const quality = scales.get(key).get(value);
           const display = field.time ? clock(value,2) : unit(value,field.unit,field.digits ?? 2);
           return `<td${quality == null ? '' : ' class="ranked-cell" style="--quality:' + quality + '%"'}>${display}</td>`;

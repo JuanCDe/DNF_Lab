@@ -700,6 +700,7 @@ tbody tr:last-child > * { border-bottom: 0; }
 .chart-controls select { width: auto; }
 .attempt-item { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--line); }
 .attempt-item .attempt { flex: 1; }
+.dq-label { color: var(--red); font-weight: 650; }
 .attempt-chart[aria-pressed="true"] { background: var(--accent-soft); }
 .attempt-list { margin-top: 12px; display: grid; gap: 4px; }
 .attempt .number { min-width: 60px; margin-inline-start: auto; text-align: end; font-size: var(--text-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -720,6 +721,7 @@ tbody tr:last-child > * { border-bottom: 0; }
 .chart .trend { fill: none; stroke: var(--plot-color); stroke-width: 2; }
 .chart .value { fill: var(--ink); font-weight: 650; }
 .chart-point :is(rect, circle) { fill: var(--plot-color); }
+.chart-point.disqualified circle { stroke: var(--red); stroke-width: 2; }
 .chart-point:is(:hover, :focus-visible) :is(rect, circle) { stroke: var(--ink); stroke-width: 1.5; }
 .scatter-point { cursor: pointer; }
 .scatter-dot { fill: var(--plot-color); stroke: var(--surface); stroke-width: 1; }
