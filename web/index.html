@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Annotate and compare dynamic apnea without fins video attempts.">
+  <title>DNF Lab</title>
+  <link rel="icon" href="/assets/mark.svg?v=3" type="image/svg+xml">
+  <script>
+    const preferredTheme = localStorage.getItem('dnf-theme');
+    document.documentElement.dataset.theme = ['light', 'dark'].includes(preferredTheme)
+      ? preferredTheme : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  </script>
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to content</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="#studio"><img src="/assets/mark.svg?v=3" alt="" width="32" height="32"><span>DNF Lab</span></a>
+      <nav id="navigation" aria-label="Main navigation"></nav>
+      <div class="topbar-end">
+        <span id="save-state" class="save-state" role="status"></span>
+        <button id="theme-toggle" class="icon-button" type="button" aria-label="Dark theme" aria-pressed="false"></button>
+        <button id="method-link" class="icon-button" type="button" aria-label="Keyboard shortcuts" title="Keyboard shortcuts"></button>
+      </div>
+    </div>
+  </header>
+  <main id="content" class="content" aria-busy="true" tabindex="-1">
+    <div class="empty system-state loading" role="status"><p>Loading…</p><div class="loading-bars" aria-hidden="true"></div></div>
+  </main>
+  <dialog id="dialog" aria-labelledby="dialog-title"></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <noscript>Enable JavaScript to use DNF Lab.</noscript>
+</body>
+</html>

@@ -1,0 +1,116 @@
+:root {
+  color-scheme: light;
+  --bg: #eaf0f3;
+  --surface: #fbfcfd;
+  --surface-soft: #edf3f7;
+  --ink: #111f31;
+  --muted: #45566b;
+  --quiet: #526478;
+  --line: #ccd9e2;
+  --strong-line: #a1b4c4;
+  --field-edge: #778a9c;
+  --accent: #174a9c;
+  --accent-ink: #fff;
+  --accent-hover: #113c83;
+  --accent-soft: #e1edfa;
+  --accent-line: #a3bfdc;
+  --color-focus: #0f53ae;
+
+  --deck: #10263c;
+  --stage: #132f47;
+  --stage-black: #081521;
+  --stage-hover: #23455f;
+  --stage-line: #456078;
+  --stage-field: #728ca1;
+  --lane: #24465f;
+  --video-ink: #f1f9ff;
+  --video-muted: #b8cfdf;
+  --signal: #9be7ff;
+  --seek-stroke: #a6e3c2;
+  --seek-wall: #f4d09a;
+  --video-overlay: #081521e8;
+  --video-error: #ffd5cd;
+  --video-error-bg: #4d2c35;
+
+  --green: #245b48;
+  --green-soft: #e5f1eb;
+  --red: #9b3435;
+  --red-ink: #fff;
+  --red-soft: #f9e9e8;
+  --gold: #79501c;
+  --gold-soft: #f7eedd;
+  --rank-low: #f5e2de;
+  --rank-high: #d9ede2;
+  --active-cue: #b32636;
+  --plot-woman: #926310;
+  --plot-man: #167653;
+  --plot-unspecified: #617488;
+  --backdrop: #071726a8;
+  --shadow-color: #14283c29;
+  --clear: transparent;
+
+  --font-body: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+  --text-xs: .75rem;
+  --text-sm: .875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.125rem;
+  --control: 36px;
+  --touch: 44px;
+  --radius: 8px;
+  --control-radius: 4px;
+  --container: 1520px;
+  --gutter: 32px;
+  --gap: 16px;
+  --panel-padding: 16px;
+  --chrome-height: 60px;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0e1925;
+  --surface: #162536;
+  --surface-soft: #203247;
+  --ink: #edf5fb;
+  --muted: #bfcedc;
+  --quiet: #a9bdcf;
+  --line: #33485d;
+  --strong-line: #557087;
+  --field-edge: #7790a7;
+  --accent: #9bcaff;
+  --accent-ink: #0d213a;
+  --accent-hover: #b8dbff;
+  --accent-soft: #233e59;
+  --accent-line: #5c88b5;
+  --color-focus: #a5ddff;
+
+  --green: #a6e3c2;
+  --green-soft: #234337;
+  --red: #ffb6af;
+  --red-ink: #421718;
+  --red-soft: #492a33;
+  --gold: #f4d09a;
+  --gold-soft: #483a28;
+  --rank-low: #462d38;
+  --rank-high: #24423a;
+  --active-cue: #ff999e;
+  --plot-woman: #eac266;
+  --plot-man: #72d5aa;
+  --plot-unspecified: #b0c0d0;
+  --shadow-color: #030b15a0;
+}
+
+@media (max-width: 64rem) {
+  :root { --gutter: 24px; }
+}
+
+@media (max-width: 43rem) {
+  :root { --gutter: 12px; --panel-padding: 12px; --chrome-height: 96px; --control: var(--touch); }
+}
+
+@media (pointer: coarse) {
+  :root { --control: var(--touch); }
+}
