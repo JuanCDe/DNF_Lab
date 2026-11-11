@@ -406,6 +406,14 @@ const compareFields = {
   secondsPerEq: { label: 's/eq. cycle', get: row => row.secondsPerEq, unit: 's/cycle' },
 };
 const compareColumns = Object.entries(compareFields);
+export const scatterPresets = {
+  'cycles-speed': { axes: ['eq', 'speed'], scope: '100', label: 'Eq. cycles vs Speed · first 100 m',
+    note: 'See who swims faster with fewer movements.' },
+  'speed-distance': { axes: ['speed', 'maxDistance'], scope: '100', label: 'Speed vs Max distance · first 100 m speed',
+    note: 'Compare early pace with each athlete’s longest recorded attempt.' },
+  'cycle-distance-time': { axes: ['metresPerEq', 'secondsPerEq'], label: 'm/eq. cycle vs s/eq. cycle',
+    note: 'Compare how far athletes travel per cycle with how long each cycle takes on average.' },
+};
 
 function qualityScale(rows, field, fixedSplit) {
   if (!field.better || field.splitOnly && !fixedSplit) return new Map();
@@ -453,6 +461,8 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
     id: row.athlete.id, name: row.athlete.name, sex: row.athlete.sex, x: axisFields[0].get(row), y: axisFields[1].get(row),
   })).filter(point=>measured(point.x) && measured(point.y)) : [];
   const plotTitle = axisFields.length === 2 ? axisFields.map(field => field.label).join(' vs ') : 'Scatter plot';
+  const [presetId, preset] = Object.entries(scatterPresets).find(([, item]) =>
+    (!item.scope || item.scope === state.scope) && item.axes.every((axis, index) => axis === state.axes[index])) ?? [];
   const axisSelect = index => {
     const axis = index === 0 ? 'x' : 'y';
     const current = state.axes[index];
@@ -489,12 +499,8 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
         ${hasRanks ? '<div class="compare-key"><i></i> Lower rank <span>→</span> Higher rank</div>' : ''}
         ${rows.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Comparison table"><table><thead><tr>${compareColumns.map(([key,field])=>{
           const sorted = state.sort === key;
-          const index = state.axes.indexOf(key);
-          const axis = index < 0 ? '' : index === 0 ? 'X' : 'Y';
-          const label = field.unit ? `<button type="button" class="axis-column" data-axis="${key}" aria-pressed="${index >= 0}"
-            title="${field.detail ? field.detail + '. ' : ''}Toggle scatter plot axis">${field.label}${axis ? `<span class="axis-tag" aria-hidden="true">${axis}</span>` : ''}</button>` : field.label;
           return `<th scope="col"${sorted ? ' aria-sort="' + (state.direction > 0 ? 'ascending' : 'descending') + '"' : ''}>
-            <div class="column-controls"><span data-column-label>${label}</span>
+            <div class="column-controls"><span data-column-label${field.detail ? ` title="${esc(field.detail)}"` : ''}>${field.label}</span>
             <button type="button" class="sort-column" data-sort="${key}" aria-label="Sort by ${field.label}" title="Sort by ${field.label}">
               ${icon(sorted ? (state.direction > 0 ? 'sortUp' : 'sortDown') : 'sort')}</button></div>
           </th>`;
@@ -515,8 +521,15 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
       <section class="panel chart-panel comparison-scatter">
         ${titleRow(esc(plotTitle), axisFields.length === 2 && points.length < rows.length ? `${points.length} of ${rows.length} athletes plotted` : '',
           `<button class="text-button compare-jump" type="button" data-jump-to="compare-table-title">${icon('table')} Table</button>`, 'compare-plot-title')}
+        <div class="scatter-presets">
+          <label>Metric pair<select id="scatter-preset"${preset ? ' aria-describedby="scatter-preset-note"' : ''}>
+            <option value="" disabled${preset ? '' : ' selected'}>Custom axes</option>
+            ${options(Object.entries(scatterPresets).map(([id, item]) => [id, item.label]), presetId)}
+          </select></label>
+          ${preset ? `<p id="scatter-preset-note">${esc(preset.note)}</p>` : ''}
+        </div>
+        ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric')}
         <div class="axis-controls">${axisSelect(0)}${axisSelect(1)}</div>
-        ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric', 'You can also select metrics in the table headings.')}
       </section>
     </div>`;
 }

@@ -3,7 +3,7 @@ import { wireAthletePicker } from './athlete-picker.js';
 import { hlsPlayer, rates, rememberedHandle, rememberFile, timedLink, videoLink } from './media.js';
 import { analyze, eventNames, kickNames, measured, parseLegacy, parseTime, pendingRelease, positive, validateTimeline } from './metrics.js';
 import { athleteSexes, avatar, clock, date, download, esc, eventIcons, eventKeys, icon, num, options, safeUrl, wireScatterLabels } from './ui.js';
-import { athletesView, captureFeedback, comparison, competitionKey, markerStatus, nav, orderedRuns, sourceLabel, splitTable, studio, studioMetrics, techniqueView, timeline } from './views.js';
+import { athletesView, captureFeedback, comparison, competitionKey, markerStatus, nav, orderedRuns, scatterPresets, sourceLabel, splitTable, studio, studioMetrics, techniqueView, timeline } from './views.js';
 
 const $ = selector => document.querySelector(selector);
 const playbackTarget = () => media?.youtube ? media.playback : $('#video');
@@ -1307,11 +1307,7 @@ function exportComparison() {
   const rows = [...table.rows].map(row=>csvRow([...row.cells].map(cell=>{
     const link = cell.querySelector('.table-person strong');
     const header = cell.querySelector('[data-column-label]');
-    if (header) {
-      const label = header.cloneNode(true);
-      label.querySelector('.axis-tag')?.remove();
-      return label.textContent.trim();
-    }
+    if (header) return header.textContent.trim();
     return link?.textContent ?? cell.textContent.trim().replace(/ [↕↑↓]$/,'');
   })));
   download('dnf-comparison-' + compare.scope + '.csv','\ufeff' + rows.join('\r\n'),'text/csv;charset=utf-8');
@@ -1418,12 +1414,6 @@ document.addEventListener('click', async event => {
       focusHeading('attempt-review-title');
       return;
     }
-    if (d.axis) {
-      compare.axes = compare.axes.includes(d.axis)
-        ? compare.axes.filter(key => key !== d.axis) : [...compare.axes.slice(-1), d.axis];
-      route();
-      $('[data-axis="' + d.axis + '"]')?.focus({ preventScroll: true });
-    }
     if (d.sort) {
       compare.direction=compare.sort===d.sort ? -compare.direction : ['name','time'].includes(d.sort) ? 1 : -1;
       compare.sort=d.sort;
@@ -1446,6 +1436,14 @@ document.addEventListener('change',event=>{
   if (!run) return;
   const input=event.target;
   const id=input.id;
+  if (id === 'scatter-preset' && Object.hasOwn(scatterPresets, input.value)) {
+    const preset = scatterPresets[input.value];
+    compare.axes = [...preset.axes];
+    if (preset.scope) compare.scope = preset.scope;
+    route();
+    $('#scatter-preset').focus({ preventScroll: true });
+    return;
+  }
   if (input.matches('select[data-compare-axis]')) {
     const index = Number(input.dataset.compareAxis);
     const other = 1 - index;
