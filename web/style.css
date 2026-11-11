@@ -485,9 +485,8 @@ kbd {
 .section-title > div { min-width: 0; }
 .section-title p { margin-top: 4px; color: var(--muted); font-size: var(--text-sm); }
 .attempt-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
-.attempt-toolbar h2 { margin-inline-end: auto; }
 .attempt-toolbar .heading-actions { justify-content: flex-start; }
-.attempt-commit { padding-inline-start: 12px; border-inline-start: 1px solid var(--line); }
+.attempt-commit { margin-inline-start: auto; padding-inline-start: 12px; border-inline-start: 1px solid var(--line); }
 .session-fields {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.35fr) minmax(0, .65fr) repeat(2, minmax(0, 1fr));
@@ -876,10 +875,6 @@ dialog form { display: grid; gap: 12px; }
   .profile-title .heading-actions { flex-basis: 100%; justify-content: flex-start; }
 }
 
-@media (43rem < width <= 56rem) {
-  .attempt-open { margin-inline-end: auto; }
-}
-
 @media (max-width: 43rem) {
   .topbar-inner { grid-template-columns: auto minmax(0, 1fr); gap: 0 8px; }
   #navigation { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; }
@@ -919,8 +914,6 @@ dialog form { display: grid; gap: 12px; }
   .marker .event-icon svg { width: 16px; height: 16px; }
   .marker strong { font-size: var(--text-xs); }
   .session-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .attempt-toolbar { display: grid; grid-template-columns: minmax(0, 1fr); }
-  .attempt-toolbar .heading-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .attempt-commit { padding: 0; border: 0; }
   .attempt-chart { padding-inline: 4px; font-size: var(--text-xs); }
   .history-metric { flex-wrap: wrap; }

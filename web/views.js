@@ -101,7 +101,7 @@ export function studio(run, athletes, runs, bookmark) {
       <section class="panel run-info">
         <div class="attempt-toolbar">
           <h2>Attempt details</h2>
-          <div class="heading-actions attempt-open">${action('open-run', 'Open attempt', 'folder')}${action('new-run', 'New attempt', 'plus')}</div>
+          <div class="heading-actions">${action('open-run', 'Open attempt', 'folder')}${action('new-run', 'New attempt', 'plus')}</div>
           <div class="heading-actions attempt-commit">${action('run-details', 'Details', 'edit', 'quiet')}${action('save-attempt', 'Save attempt', 'check', 'primary')}</div>
         </div>
         <div class="session-fields">
