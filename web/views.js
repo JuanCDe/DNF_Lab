@@ -14,6 +14,17 @@ const empty = (name, label, description = '') => `<div class="empty">${icon(name
 const titleRow = (title, subtitle = '', trailing = '', headingId = '') =>
   `<div class="section-title"><div><h2${headingId ? ` id="${headingId}" tabindex="-1"` : ''}>${title}</h2>${subtitle ? `<p>${subtitle}</p>` : ''}</div>${trailing}</div>`;
 const unit = (value, suffix, digits = 2) => measured(value) ? num(value, digits) + ' ' + suffix : '—';
+const metricHelp = (id, label, definition) => `<button type="button" class="metric-help" popovertarget="help-${id}"
+  aria-label="About ${esc(label)}">${icon('help')}</button><div id="help-${id}" class="metric-tooltip" popover>${esc(definition)}</div>`;
+const strokeIntervalHelp = 'S marks mid-stroke. S–S is the elapsed time between consecutive stroke marks within a pool length.';
+const kickPhaseHelp = 'K phase is how far through an S–S cycle the kick ends. S marks mid-stroke and K marks the end of the kick. Divide the time from the first S to K by the time from the first S to the next S, then multiply by 100. For example, a kick ending 1 s into a 4 s cycle has a K phase of 25%. The app reports a phase when exactly one eligible kick ends strictly between the two strokes. Extra, push-off and wall-approach kicks are excluded.';
+const pairDefinitions = {
+  eq: 'Add the number of strokes and kicks, then divide by two.',
+  pairs: 'A complete cycle pairs a stroke with an eligible kick within the segment.',
+  metresPerEq: 'Distance divided by equivalent cycles.',
+  strokeInterval: strokeIntervalHelp + ' Both stroke marks must be within the same 25 m segment.',
+  kickPhase: kickPhaseHelp,
+};
 const sexKey = sex => `<span class="sex-key ${sexClass(sex)}">${sexLabel(sex)}</span>`;
 const refRun = run => run.origin !== 'video';
 const started = run => run.events.some(event => event.type === 'i');
@@ -245,7 +256,9 @@ export function techniqueView(m, { editable = false, sex } = {}) {
       <h3>Wall turns</h3>
       ${turns.length ? `<div class="table-wrap"><table><thead><tr>
         <th scope="col">Wall</th><th scope="col">Contact mark</th><th scope="col">Release mark</th>
-        <th scope="col">Contact → release</th><th scope="col">Release → first S</th><th scope="col">Release → first K</th>
+        <th scope="col">Contact → release ${metricHelp('contact-release', 'contact to release', 'Time from first wall touch until the feet leave the wall.')}</th>
+        <th scope="col">Release → first S ${metricHelp('release-stroke', 'release to first S', 'Time from feet leaving the wall to the first mid-stroke mark.')}</th>
+        <th scope="col">Release → first K ${metricHelp('release-kick', 'release to first K', 'Time from feet leaving the wall to the end of the first marked kick.')}</th>
         ${editable ? '<th scope="col">Events</th>' : ''}
       </tr></thead><tbody>
         ${turns.map(turn => `<tr>
@@ -255,16 +268,15 @@ export function techniqueView(m, { editable = false, sex } = {}) {
           ${editable ? `<td class="timing-actions">${turn.contact ? edit(turn.contact, turn.contact.contactConfirmed ? 'Edit contact' : 'Review contact') : ''}
             ${turn.release ? edit(turn.release, 'Edit release') : `<button type="button" class="text-button" data-add-release="${esc(turn.contact.id)}">Add release</button>`}</td>` : ''}
         </tr>`).join('')}
-      </tbody><tfoot><tr><th scope="row" colspan="3">Range across turns (max − min)</th>${timingCells(turnRanges)}${editable ? '<td></td>' : ''}</tr></tfoot></table></div>
-      <p class="timing-note">Contact → release uses first wall touch and feet off the wall. S is mid-stroke and K is the end of the kick.</p>`
+      </tbody><tfoot><tr><th scope="row" colspan="3">Range across turns (max − min)</th>${timingCells(turnRanges)}${editable ? '<td></td>' : ''}</tr></tfoot></table></div>`
         : '<p class="timing-note">No wall marks recorded.</p>'}
     </div>
     <div class="timing-block">
       <h3>Stroke cycles by length</h3>
       ${lengths.length ? `
-        <p class="timing-note">S denotes a stroke and K denotes a kick. S–S measures the time between consecutive stroke marks within a length. CV measures spread relative to the mean. K phase is shown only when one eligible kick falls strictly between the two S marks.</p>
-        <div class="table-wrap"><table><thead><tr><th scope="col">Length</th><th scope="col">Timed cycles</th><th scope="col">Mean S–S</th>
-          <th scope="col">S–S CV</th><th scope="col">Mean K phase</th><th scope="col">Cycles with K phase</th></tr></thead><tbody>
+        <div class="table-wrap"><table><thead><tr><th scope="col">Length</th><th scope="col">Timed cycles</th><th scope="col">Mean S–S ${metricHelp('mean-stroke', 'mean S–S', strokeIntervalHelp)}</th>
+          <th scope="col">S–S CV ${metricHelp('stroke-cv', 'S–S CV', 'The standard deviation of S–S times as a percentage of their mean. It requires at least two timed cycles.')}</th>
+          <th scope="col">Mean K phase ${metricHelp('mean-kick-phase', 'mean K phase', kickPhaseHelp)}</th><th scope="col">Cycles with K phase</th></tr></thead><tbody>
           ${lengths.map(length => `<tr><th scope="row">${lengthName(length)}${length.partial ? ' · partial / open' : ''}</th>
             <td>${length.timed}</td><td>${seconds(length.average)}</td><td>${unit(length.cv, '%', 1)}</td>
             <td>${unit(length.kickPhase, '%', 1)}</td><td>${length.phased}</td></tr>`).join('')}
@@ -274,7 +286,7 @@ export function techniqueView(m, { editable = false, sex } = {}) {
           {label:'Mean S–S by length', unit:'s', kind:'line', sex}) : ''}
         ${lengths.some(length => length.cycles.length) ? `<details class="technical"><summary>Individual S–S cycles</summary>
           <div class="table-wrap"><table><thead><tr><th scope="col">Cycle</th><th scope="col">First S</th><th scope="col">Next S</th>
-            <th scope="col">S–S</th><th scope="col">Associated K</th><th scope="col">K phase</th></tr></thead><tbody>
+            <th scope="col">S–S</th><th scope="col">Associated K</th><th scope="col">K phase ${metricHelp('kick-phase', 'K phase', kickPhaseHelp)}</th></tr></thead><tbody>
             ${lengths.map(length => length.cycles.map((cycle, index) => `<tr><th scope="row">L${length.number} · ${index + 1}</th>
               <td>${markClock(cycle.from)}</td><td>${markClock(cycle.to)}</td><td>${seconds(cycle.duration)}</td>
               <td>${markClock(cycle.kick)}</td><td>${unit(cycle.kickPhase, '%', 1)}</td></tr>`).join('')).join('')}
@@ -452,17 +464,17 @@ function headToHead(rows, state, competitionDate) {
     results = distances.length ? `<div class="table-wrap pair-table" tabindex="0" role="region" aria-label="25 m split comparison">
       <table><thead><tr><th scope="col">Metric</th>
         ${selected.map(row => `<th scope="col">${esc(row.athlete.name)}</th>`).join('')}</tr></thead>
-        ${distances.map(to => {
+        ${distances.map((to, index) => {
           const samples = series.map(attempts => attempts.map(splits => splits.get(to)).filter(split => positive(split?.time)));
           return `<tbody><tr><th colspan="3" scope="rowgroup">${to - 25}–${to} m</th></tr>
-            ${columns.map(([key, label, format]) => `<tr><th scope="row">${label}</th>
+            ${columns.map(([key, label, format]) => `<tr><th scope="row">${label}${index === 0 && pairDefinitions[key] ? metricHelp('pair-' + key, label, pairDefinitions[key]) : ''}</th>
               ${samples.map(splits => `<td>${format(mean(splits.map(split => split[key])))}</td>`).join('')}
             </tr>`).join('')}</tbody>`;
         }).join('')}
       </table></div>` : empty('chart', 'No shared timed 25 m splits', 'Both athletes need recorded times at each end of a segment.');
   }
   return `<section class="panel chart-panel pair-comparison" aria-labelledby="pair-comparison-title">
-    ${titleRow('Athlete comparison', '25 m segments from comparable attempts', '', 'pair-comparison-title')}
+    ${titleRow('Athlete comparison', '', metricHelp('pair-splits', '25 m split comparison', 'Only 25 m segments with a recorded time for both athletes are shown. A dash indicates a missing metric within that segment.'), 'pair-comparison-title')}
     <div class="axis-controls">${select(0)}${select(1)}</div>
     ${selected.filter(Boolean).length === 2 ? `<ul class="pair-sources">${selected.map(row => `<li>
       <strong>${esc(row.athlete.name)}</strong> /
@@ -470,7 +482,6 @@ function headToHead(rows, state, competitionDate) {
         : `${esc(row.run.competition || 'Untitled session')} / ${date(competitionDate(row.run))} / ${row.run.pool} m pool`}
     </li>`).join('')}</ul>` : ''}
     ${results}
-    <p class="pair-note">A dash indicates missing measurements. S–S uses stroke intervals contained within the segment.</p>
   </section>`;
 }
 
@@ -554,7 +565,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
         ${rows.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Comparison table"><table><thead><tr>${compareColumns.map(([key,field])=>{
           const sorted = state.sort === key;
           return `<th scope="col"${sorted ? ' aria-sort="' + (state.direction > 0 ? 'ascending' : 'descending') + '"' : ''}>
-            <div class="column-controls"><span data-column-label${field.detail ? ` title="${esc(field.detail)}"` : ''}>${field.label}</span>
+            <div class="column-controls"><span data-column-label>${field.label}</span>${field.detail ? metricHelp('max-distance', field.label, field.detail) : ''}
             <button type="button" class="sort-column" data-sort="${key}" aria-label="Sort by ${field.label}" title="Sort by ${field.label}">
               ${icon(sorted ? (state.direction > 0 ? 'sortUp' : 'sortDown') : 'sort')}</button></div>
           </th>`;
@@ -576,11 +587,11 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
         ${titleRow(esc(plotTitle), axisFields.length === 2 && points.length < rows.length ? `${points.length} of ${rows.length} athletes plotted` : '',
           `<button class="text-button compare-jump" type="button" data-jump-to="compare-table-title">${icon('table')} Table</button>`, 'compare-plot-title')}
         <div class="scatter-presets">
-          <label>Metric pair<select id="scatter-preset"${preset ? ' aria-describedby="scatter-preset-note"' : ''}>
+          <label>Metric pair<select id="scatter-preset">
             <option value="" disabled${preset ? '' : ' selected'}>Custom axes</option>
             ${options(Object.entries(scatterPresets).map(([id, item]) => [id, item.label]), presetId)}
           </select></label>
-          ${preset ? `<p id="scatter-preset-note">${esc(preset.note)}</p>` : ''}
+          ${preset ? metricHelp('metric-pair', 'this metric pair', preset.note) : ''}
         </div>
         ${points.length ? `<p class="scatter-pool-key">■ 25 m &nbsp; ● 50 m${points.some(point => point.pool === 'mixed') ? ' &nbsp; ◆ Mixed-pool average' : ''}</p>` : ''}
         ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric')}

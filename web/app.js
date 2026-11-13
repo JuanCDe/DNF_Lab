@@ -1537,6 +1537,7 @@ document.addEventListener('input',event=>{
 
 document.addEventListener('keydown',event=>{
   const key=event.key.toLowerCase();
+  if (event.target.closest?.('.metric-help, .metric-tooltip')) return;
   const point = event.target.closest?.('[data-scatter-point]');
   if (point && (key === 'enter' || key === ' ')) {
     event.preventDefault();
