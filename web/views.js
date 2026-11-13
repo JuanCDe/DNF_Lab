@@ -436,7 +436,9 @@ function headToHead(rows, state, competitionDate) {
   if (selected.length === 2 && selected.every(Boolean)) {
     const series = selected.map(row => (state.mode === 'mean' ? row.matchedRuns : [row.run])
       .map(run => analyze(run, { compareSplits: true }).splits25));
-    const distances = [...new Set(series.flatMap(attempts => attempts.flatMap(splits => [...splits.keys()])))]
+    const timedDistances = series.map(attempts => new Set(attempts.flatMap(splits =>
+      [...splits].filter(([, split]) => positive(split.time)).map(([to]) => to))));
+    const distances = [...timedDistances[0]].filter(to => timedDistances[1].has(to))
       .sort((a, b) => a - b);
     const columns = [
       ['time', 'Time', value => clock(value)],
@@ -448,14 +450,16 @@ function headToHead(rows, state, competitionDate) {
       ['kickPhase', 'Mean K phase', value => unit(value, '%', 1)],
     ];
     results = distances.length ? `<div class="table-wrap pair-table" tabindex="0" role="region" aria-label="25 m split comparison">
-      <table><thead><tr><th scope="col">Split</th><th scope="col">Athlete</th>
-        ${columns.map(([,label]) => `<th scope="col">${label}</th>`).join('')}</tr></thead>
-        ${distances.map(to => `<tbody>${selected.map((row, index) => `<tr>
-          ${index === 0 ? `<th scope="rowgroup" rowspan="2">${to - 25}–${to} m</th>` : ''}
-          <th scope="row">${esc(row.athlete.name)}</th>
-          ${columns.map(([key,,format]) => `<td>${format(mean(series[index].map(splits => splits.get(to)?.[key])))}</td>`).join('')}
-        </tr>`).join('')}</tbody>`).join('')}
-      </table></div>` : empty('chart', 'No recorded 25 m splits', 'A split needs measurements at both ends.');
+      <table><thead><tr><th scope="col">Metric</th>
+        ${selected.map(row => `<th scope="col">${esc(row.athlete.name)}</th>`).join('')}</tr></thead>
+        ${distances.map(to => {
+          const samples = series.map(attempts => attempts.map(splits => splits.get(to)).filter(split => positive(split?.time)));
+          return `<tbody><tr><th colspan="3" scope="rowgroup">${to - 25}–${to} m</th></tr>
+            ${columns.map(([key, label, format]) => `<tr><th scope="row">${label}</th>
+              ${samples.map(splits => `<td>${format(mean(splits.map(split => split[key])))}</td>`).join('')}
+            </tr>`).join('')}</tbody>`;
+        }).join('')}
+      </table></div>` : empty('chart', 'No shared timed 25 m splits', 'Both athletes need recorded times at each end of a segment.');
   }
   return `<section class="panel chart-panel pair-comparison" aria-labelledby="pair-comparison-title">
     ${titleRow('Athlete comparison', '25 m segments from comparable attempts', '', 'pair-comparison-title')}

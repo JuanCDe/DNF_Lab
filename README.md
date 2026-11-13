@@ -23,7 +23,7 @@ The app opens at [http://127.0.0.1:8765](http://127.0.0.1:8765/). Keep the termi
 3. Set the pool length and add attempt details as needed. Studio saves changes locally as you work. Use **Save attempt** to save immediately.
 4. Review splits and technique timing in Studio. Open **Athletes** for a profile's attempt history, or **Compare** to plot and filter saved attempts across athletes.
 
-Use **Athlete comparison** under the plot to compare two athletes by 25 m segment. The panel uses the current filters and aggregation. Times and cycle counts come from recorded checkpoints and events. A dash indicates a missing measurement.
+Use **Athlete comparison** under the plot to compare two athletes by 25 m segment. The panel uses the current filters and aggregation and shows only segments with recorded times for both athletes. A dash indicates a missing metric within a shared segment.
 
 Studio can export an attempt as CSV and import technique notation copied from Excel.
 
