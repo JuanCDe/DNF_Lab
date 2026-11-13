@@ -506,7 +506,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
               ${icon(sorted ? (state.direction > 0 ? 'sortUp' : 'sortDown') : 'sort')}</button></div>
           </th>`;
         }).join('')}</tr></thead>
-        <tbody>${rows.map(row=>`<tr>${compareColumns.map(([key,field])=>{
+        <tbody>${rows.map(row=>`<tr${state.pinned.has(row.athlete.id) ? ' class="plot-selected"' : ''}>${compareColumns.map(([key,field])=>{
           const value = field.get(row);
           if (key === 'name') return `<th scope="row"><button class="table-person" type="button" data-view-athlete="${esc(row.athlete.id)}"
             ${state.mode !== 'mean' ? `data-compare-run="${esc(row.run.id)}"` : ''} title="${esc(value)}">${avatar(row.athlete)}<strong>${esc(value)}</strong>${row.disqualified

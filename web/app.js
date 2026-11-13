@@ -185,6 +185,7 @@ function toggleScatterLabel(point) {
   const pinned = !compare.pinned.delete(id);
   if (pinned) compare.pinned.add(id);
   point.setAttribute('aria-pressed', String(pinned));
+  $(`.compare-table [data-view-athlete="${CSS.escape(id)}"]`)?.closest('tr').classList.toggle('plot-selected', pinned);
   point.closest('svg').dispatchEvent(new Event('scatter-pin'));
 }
 
