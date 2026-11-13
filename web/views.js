@@ -579,20 +579,22 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
           return `<td${quality == null ? '' : ' class="ranked-cell" style="--quality:' + quality + '%"'}>${display}</td>`;
         }).join('')}</tr>`).join('')}</tbody></table></div>` : empty('search', 'No comparable attempts', runs.length ? 'Adjust the filters to find a completed attempt.' : 'Save a completed attempt in Studio to compare its measurements.')}
       </section>
-      <section class="panel chart-panel comparison-scatter">
-        ${titleRow(esc(plotTitle), axisFields.length === 2 && points.length < rows.length ? `${points.length} of ${rows.length} athletes plotted` : '',
-          `<button class="text-button compare-jump" type="button" data-jump-to="compare-table-title">${icon('table')} Table</button>`, 'compare-plot-title')}
-        <div class="scatter-presets">
-          <label>Metric pair<select id="scatter-preset">
-            <option value="" disabled${preset ? '' : ' selected'}>Custom axes</option>
-            ${options(Object.entries(scatterPresets).map(([id, item]) => [id, item.label]), presetId)}
-          </select></label>
-          ${preset ? metricHelp('metric-pair', 'this metric pair', preset.note) : ''}
-        </div>
-        ${points.length ? `<p class="scatter-pool-key">■ 25 m &nbsp; ● 50 m${points.some(point => point.pool === 'mixed') ? ' &nbsp; ◆ Mixed-pool average' : ''}</p>` : ''}
-        ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric')}
-        <div class="axis-controls">${axisSelect(0)}${axisSelect(1)}</div>
-      </section>
-      ${headToHead(chartRows, state, competitionDate)}
+      <div class="comparison-analysis">
+        <section class="panel chart-panel comparison-scatter">
+          ${titleRow(esc(plotTitle), axisFields.length === 2 && points.length < rows.length ? `${points.length} of ${rows.length} athletes plotted` : '',
+            `<button class="text-button compare-jump" type="button" data-jump-to="compare-table-title">${icon('table')} Table</button>`, 'compare-plot-title')}
+          <div class="scatter-presets">
+            <label>Metric pair<select id="scatter-preset">
+              <option value="" disabled${preset ? '' : ' selected'}>Custom axes</option>
+              ${options(Object.entries(scatterPresets).map(([id, item]) => [id, item.label]), presetId)}
+            </select></label>
+            ${preset ? metricHelp('metric-pair', 'this metric pair', preset.note) : ''}
+          </div>
+          ${points.length ? `<p class="scatter-pool-key">■ 25 m &nbsp; ● 50 m${points.some(point => point.pool === 'mixed') ? ' &nbsp; ◆ Mixed-pool average' : ''}</p>` : ''}
+          ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric')}
+          <div class="axis-controls">${axisSelect(0)}${axisSelect(1)}</div>
+        </section>
+        ${headToHead(chartRows, state, competitionDate)}
+      </div>
     </div>`;
 }

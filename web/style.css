@@ -742,6 +742,7 @@ tbody tr:last-child > * { border-bottom: 0; }
   gap: var(--gap);
   margin-top: var(--gap);
 }
+.comparison-analysis { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--gap); }
 .comparison-scatter .chart-scroll { max-width: 600px; margin-inline: auto; }
 .compare-filter .section-title { margin-bottom: 8px; }
 .compare-filter .filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
@@ -752,7 +753,6 @@ tbody tr:last-child > * { border-bottom: 0; }
 .scatter-presets { display: flex; align-items: end; gap: 4px; margin-block-start: 12px; }
 .scatter-presets label { flex: 1; }
 .scatter-pool-key { margin-block-start: 4px; color: var(--muted); font-size: var(--text-xs); }
-.pair-comparison { grid-column: 1 / -1; }
 .pair-comparison .axis-controls { max-width: 40rem; }
 .pair-sources { margin: 12px 0; padding: 0; list-style: none; color: var(--muted); font-size: var(--text-sm); }
 .pair-sources strong { color: var(--ink); }
