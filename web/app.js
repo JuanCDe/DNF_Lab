@@ -1,4 +1,5 @@
 import { attachYouTube } from './youtube.js';
+import { analysisExportRows } from './analysis-export.js';
 import { wireAthletePicker } from './athlete-picker.js';
 import { hlsPlayer, rates, rememberedHandle, rememberFile, timedLink, videoLink } from './media.js';
 import { analyze, eventNames, kickNames, measured, parseLegacy, parseTime, pendingRelease, positive, validateTimeline } from './metrics.js';
@@ -1314,6 +1315,20 @@ function exportComparison() {
   download('dnf-comparison-' + compare.scope + '.csv','\ufeff' + rows.join('\r\n'),'text/csv;charset=utf-8');
 }
 
+function exportTechniqueAnalysis() {
+  openForm('Export AI analysis CSV', `
+    <label>Athlete to analyze<select name="athlete" required>
+      ${options([['', 'Select an athlete'], ...athletes.map(athlete => [
+        athlete.id, [athlete.name, athlete.country].filter(Boolean).join(' / '),
+      ])], profiles.id)}
+    </select></label>
+    <p class="form-note">Includes splits from completed attempts across all saved athletes and instructions to analyze the selected athlete. The file uses athlete codes. Attach it to the AI tool you want to use.</p>`,
+  data => {
+    const rows = analysisExportRows(athletes, runs, data.get('athlete'));
+    download('dnf-technique-analysis.csv', '\ufeff' + rows.map(csvRow).join('\r\n'), 'text/csv;charset=utf-8');
+  }, 'Download CSV');
+}
+
 const handlers = {
   'load-video': selectLocalFile,
   'load-link': loadVideoLink,
@@ -1337,6 +1352,7 @@ const handlers = {
   'close-dialog': () => dialog.close(),
   'export-run': exportRun,
   'export-comparison': exportComparison,
+  'export-technique-analysis': exportTechniqueAnalysis,
   'reset-comparison': () => {
     Object.assign(compare, comparisonFilters);
     route();

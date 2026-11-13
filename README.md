@@ -25,6 +25,8 @@ The app opens at [http://127.0.0.1:8765](http://127.0.0.1:8765/). Keep the termi
 
 Use **Athlete comparison** under the plot to compare two athletes by 25 m segment. The panel uses the current filters and aggregation and shows only segments with recorded times for both athletes. A dash indicates a missing metric within a shared segment.
 
+Use **Export AI analysis CSV** in Compare, choose an athlete, and attach the downloaded file to your AI tool. It includes instructions in Spanish and data from completed, consistent attempts across the saved athlete library. It uses athlete and attempt codes and omits names, notes and media links. The export runs locally.
+
 Studio can export an attempt as CSV and import technique notation copied from Excel.
 
 | Key | Action |

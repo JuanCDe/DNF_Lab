@@ -325,6 +325,8 @@ export function analyze(run, { compareSplits = false } = {}) {
         ...effort(25, positive(splitTime) ? splitTime : null, stats),
         strokeInterval: mean(splitCycles.map(cycle => cycle.duration)),
         kickPhase: mean(splitCycles.map(cycle => cycle.kickPhase)),
+        timedCycles: splitCycles.filter(cycle => measured(cycle.duration)).length || null,
+        phasedCycles: splitCycles.filter(cycle => measured(cycle.kickPhase)).length || null,
       });
     }
   }

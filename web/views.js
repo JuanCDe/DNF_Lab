@@ -556,6 +556,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
           `<div class="heading-actions">
             <button class="text-button compare-jump" type="button" data-jump-to="compare-plot-title">${icon('chart')} View plot</button>
             <button class="text-button" type="button" data-action="export-comparison" ${rows.length ? '' : 'disabled'}>${icon('download')} Export CSV</button>
+            <button class="button secondary" type="button" data-action="export-technique-analysis" ${athletes.length && runs.length ? '' : 'disabled'}>${icon('download')} Export AI analysis CSV</button>
           </div>`, 'compare-table-title')}
         ${hasRanks ? '<div class="compare-key"><i></i> Lower rank <span>→</span> Higher rank</div>' : ''}
         ${rows.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Comparison table"><table><thead><tr>${compareColumns.map(([key,field])=>{
