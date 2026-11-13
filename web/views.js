@@ -245,7 +245,7 @@ export function techniqueView(m, { editable = false, sex } = {}) {
       <h3>Wall turns</h3>
       ${turns.length ? `<div class="table-wrap"><table><thead><tr>
         <th scope="col">Wall</th><th scope="col">Contact mark</th><th scope="col">Release mark</th>
-        <th scope="col">Contact → release</th><th scope="col">Release → first F</th><th scope="col">Release → first J</th>
+        <th scope="col">Contact → release</th><th scope="col">Release → first S</th><th scope="col">Release → first K</th>
         ${editable ? '<th scope="col">Events</th>' : ''}
       </tr></thead><tbody>
         ${turns.map(turn => `<tr>
@@ -256,25 +256,25 @@ export function techniqueView(m, { editable = false, sex } = {}) {
             ${turn.release ? edit(turn.release, 'Edit release') : `<button type="button" class="text-button" data-add-release="${esc(turn.contact.id)}">Add release</button>`}</td>` : ''}
         </tr>`).join('')}
       </tbody><tfoot><tr><th scope="row" colspan="3">Range across turns (max − min)</th>${timingCells(turnRanges)}${editable ? '<td></td>' : ''}</tr></tfoot></table></div>
-      <p class="timing-note">Contact → release uses first wall touch and feet off the wall. F is mid-stroke and J is the end of the kick.</p>`
+      <p class="timing-note">Contact → release uses first wall touch and feet off the wall. S is mid-stroke and K is the end of the kick.</p>`
         : '<p class="timing-note">No wall marks recorded.</p>'}
     </div>
     <div class="timing-block">
       <h3>Stroke cycles by length</h3>
       ${lengths.length ? `
-        <p class="timing-note">F → F uses consecutive stroke marks within a length. CV measures spread relative to the mean. J phase is shown only when one eligible kick falls strictly between the two F marks.</p>
-        <div class="table-wrap"><table><thead><tr><th scope="col">Length</th><th scope="col">Timed cycles</th><th scope="col">Mean F → F</th>
-          <th scope="col">F → F CV</th><th scope="col">Mean J phase</th><th scope="col">Cycles with J phase</th></tr></thead><tbody>
+        <p class="timing-note">S denotes a stroke and K denotes a kick. S–S measures the time between consecutive stroke marks within a length. CV measures spread relative to the mean. K phase is shown only when one eligible kick falls strictly between the two S marks.</p>
+        <div class="table-wrap"><table><thead><tr><th scope="col">Length</th><th scope="col">Timed cycles</th><th scope="col">Mean S–S</th>
+          <th scope="col">S–S CV</th><th scope="col">Mean K phase</th><th scope="col">Cycles with K phase</th></tr></thead><tbody>
           ${lengths.map(length => `<tr><th scope="row">${lengthName(length)}${length.partial ? ' · partial / open' : ''}</th>
             <td>${length.timed}</td><td>${seconds(length.average)}</td><td>${unit(length.cv, '%', 1)}</td>
             <td>${unit(length.kickPhase, '%', 1)}</td><td>${length.phased}</td></tr>`).join('')}
         </tbody></table></div>
-        ${first !== last ? `<p class="timing-note">${lengthName(last)} − ${lengthName(first)} mean F → F <strong>${change > 0 ? '+' : ''}${seconds(change)}</strong></p>` : ''}
+        ${first !== last ? `<p class="timing-note">${lengthName(last)} − ${lengthName(first)} mean S–S <strong>${change > 0 ? '+' : ''}${seconds(change)}</strong></p>` : ''}
         ${lengths.some(length => length.timed) ? chart(lengths.map(length => ({label:'L'+length.number, name:lengthName(length), value:length.average})),
-          {label:'Mean F → F by length', unit:'s', kind:'line', sex}) : ''}
-        ${lengths.some(length => length.cycles.length) ? `<details class="technical"><summary>Individual F → F cycles</summary>
-          <div class="table-wrap"><table><thead><tr><th scope="col">Cycle</th><th scope="col">First F</th><th scope="col">Next F</th>
-            <th scope="col">F → F</th><th scope="col">Associated J</th><th scope="col">J phase</th></tr></thead><tbody>
+          {label:'Mean S–S by length', unit:'s', kind:'line', sex}) : ''}
+        ${lengths.some(length => length.cycles.length) ? `<details class="technical"><summary>Individual S–S cycles</summary>
+          <div class="table-wrap"><table><thead><tr><th scope="col">Cycle</th><th scope="col">First S</th><th scope="col">Next S</th>
+            <th scope="col">S–S</th><th scope="col">Associated K</th><th scope="col">K phase</th></tr></thead><tbody>
             ${lengths.map(length => length.cycles.map((cycle, index) => `<tr><th scope="row">L${length.number} · ${index + 1}</th>
               <td>${markClock(cycle.from)}</td><td>${markClock(cycle.to)}</td><td>${seconds(cycle.duration)}</td>
               <td>${markClock(cycle.kick)}</td><td>${unit(cycle.kickPhase, '%', 1)}</td></tr>`).join('')).join('')}
