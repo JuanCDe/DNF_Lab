@@ -178,7 +178,9 @@ function plotNameLines(name, fits) {
   return lines;
 }
 
-function scatterDot(x, y, index, count) {
+function scatterDot(x, y, index, count, pool) {
+  if (pool === 25) return `<rect class="scatter-dot" x="${x - 5}" y="${y - 5}" width="10" height="10"/>`;
+  if (pool === 'mixed') return `<path class="scatter-dot" d="M${x} ${y - 6} l6 6 -6 6 -6 -6 Z"/>`;
   if (count === 1) return `<circle class="scatter-dot" cx="${x}" cy="${y}" r="5"/>`;
   const radius = Math.min(11, 6 + count);
   const edge = part => {
@@ -214,11 +216,17 @@ export function scatter(items, [xField, yField], pinned) {
       <text x="${px}" y="${bottom + 18}" text-anchor="middle">${tick(xField,value)}</text>`;
   }).join('');
   const dots = [...groups.values()].map(group => group.map((item,index) => {
-    const text = esc(`${item.name}, ${sexLabel(item.sex)}, ${xField.label} ${tick(xField,item.x)}, ${yField.label} ${tick(yField,item.y)}`);
-    const px = x.at(item.x), py = y.at(item.y);
+    const poolLabel = item.pool === 'mixed' ? 'Mixed-pool average' : item.pool + ' m pool';
+    const text = esc(`${item.name}, ${sexLabel(item.sex)}, ${poolLabel}, ${xField.label} ${tick(xField,item.x)}, ${yField.label} ${tick(yField,item.y)}`);
+    // Fan out coincident points when their shapes need to remain recognizable.
+    const separate = group.length > 1 && group.some(point => point.pool !== 50);
+    const angle = index * 2 * Math.PI / group.length;
+    const offset = separate ? 6 / Math.sin(Math.PI / group.length) : 0;
+    const px = x.at(item.x) + offset * Math.cos(angle);
+    const py = y.at(item.y) + offset * Math.sin(angle);
     return `<g class="chart-point scatter-point ${sexClass(item.sex)}" tabindex="0" role="button" aria-label="${text}"
       aria-pressed="${pinned.has(item.id)}" data-scatter-point="${esc(item.id)}" data-x="${px}" data-y="${py}">
-      ${scatterDot(px,py,index,group.length)}</g>`;
+      ${scatterDot(px,py,index,separate ? 1 : group.length,item.pool)}</g>`;
   }).join('')).join('');
   const labels = items.map(item => {
     const lines = plotNameLines(item.name, line => measure(line) <= 168);

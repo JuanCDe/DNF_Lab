@@ -304,7 +304,7 @@ export function athletesView(athletes, runs, state, competitionDate) {
   const list = athletes.filter(a => `${a.name} ${a.country ?? ''}`.toLocaleLowerCase('en').includes(query));
   const athlete = list.find(a => a.id === state.id) ?? list[0];
   const allRuns = runs.filter(run => run.athleteId === athlete?.id);
-  const attempts = orderedRuns(allRuns.filter(run => run.pool === state.pool), competitionDate);
+  const attempts = orderedRuns(allRuns.filter(run => (state.pool === 'all' || run.pool === state.pool)), competitionDate);
   const measuredAttempts = attempts.map(run => [run, analyze(run)]);
   const summary = measuredAttempts.filter(([, m]) => m.finished && !m.inconsistent);
   const disqualified = summary.filter(([r]) => r.dq).length;
@@ -329,15 +329,15 @@ export function athletesView(athletes, runs, state, competitionDate) {
             </div>
           </section>
           <section class="panel profile-history">
-            ${titleRow('Attempts', `${attempts.length} in this pool`, `<div class="heading-actions">
-              <select id="profile-pool" aria-label="Athlete pool">${options([[50,'50 m pool'],[25,'25 m pool']], state.pool)}</select>
+            ${titleRow('Attempts', `${attempts.length} ${state.pool === 'all' ? 'across both pools' : 'in this pool'}`, `<div class="heading-actions">
+              <select id="profile-pool" aria-label="Athlete pool">${options([[50,'50 m pool'],[25,'25 m pool'],['all','All']], state.pool)}</select>
               <button class="button secondary" type="button" data-new-for="${esc(athlete.id)}">${icon('plus')} New attempt</button>
             </div>`, 'profile-attempts-title')}
             ${attempts.length ? `<div class="attempt-list">${measuredAttempts.map(([r,m]) => `
               <div class="attempt-item">
                 <button type="button" data-load-run="${esc(r.id)}" class="attempt">
                   <span><strong>${esc(r.competition || 'Untitled session')}</strong>
-                    <small>${date(competitionDate(r))} / ${m.finished ? sourceLabel(r) : 'Draft'}${r.dq ? ' / <span class="dq-label">Disqualified</span>' : ''}</small></span>
+                    <small>${date(competitionDate(r))} / ${r.pool} m / ${m.finished ? sourceLabel(r) : 'Draft'}${r.dq ? ' / <span class="dq-label">Disqualified</span>' : ''}</small></span>
                   <span class="number">${unit(m.distance,'m')} <small>${clock(m.time,0)}</small></span>
                   ${icon('arrow')}
                 </button>
@@ -345,7 +345,7 @@ export function athletesView(athletes, runs, state, competitionDate) {
                   aria-label="Review metrics for ${esc(r.competition || 'this attempt')}" aria-pressed="${r.id === run?.id}">Review</button>
                 <button type="button" class="icon-button danger" data-delete-run="${esc(r.id)}"
                   title="Delete attempt" aria-label="Delete attempt · ${esc(r.competition || 'Untitled session')}">${icon('trash')}</button>
-              </div>`).join('')}</div>` : empty('folder','No attempts in this pool', 'Choose another pool or start a new attempt.')}
+              </div>`).join('')}</div>` : empty('folder',state.pool === 'all' ? 'No attempts yet' : 'No attempts in this pool', state.pool === 'all' ? 'Start a new attempt for this athlete.' : 'Choose another pool or start a new attempt.')}
           </section>
           <section class="panel profile-summary">
             ${titleRow('Performance history', `${summary.length} ${summary.length === 1 ? 'attempt' : 'attempts'}${disqualified ? ' / ' + disqualified + ' disqualified' : ''}`,
@@ -424,12 +424,12 @@ function qualityScale(rows, field, fixedSplit) {
 
 export function comparison(athletes, runs, state, filtersChanged, competitionDate) {
   const countries = [...new Set(athletes.map(a=>a.country).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'en'));
-  const competitions = [...competitionNames(runs.filter(run => run.pool === state.pool))]
+  const competitions = [...competitionNames(runs.filter(run => (state.pool === 'all' || run.pool === state.pool)))]
     .sort(([, a], [, b]) => a.localeCompare(b, 'en'));
   const query = state.query.trim().toLocaleLowerCase('en');
   const chartRows = athletes.flatMap(athlete => {
     if (state.country && athlete.country !== state.country || !athlete.name.toLocaleLowerCase('en').includes(query)) return [];
-    const eligible = orderedRuns(runs.filter(run => run.athleteId === athlete.id && run.pool === state.pool && (state.dq || !run.dq)), competitionDate)
+    const eligible = orderedRuns(runs.filter(run => run.athleteId === athlete.id && (state.pool === 'all' || run.pool === state.pool) && (state.dq || !run.dq)), competitionDate)
       .map(run => ({run, total:analyze(run)}))
       .filter(({total}) => total.finished && !total.inconsistent);
     const matched = eligible.flatMap(({run,total}) => {
@@ -446,7 +446,8 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
     const values = state.mode === 'mean' ? Object.fromEntries(keys.map(key=>[key,mean(matched.map(m=>m[key]))])) : chosen;
     const distances = eligible.map(({total})=>total.distance).filter(positive);
     const disqualified = state.mode === 'mean' ? matched.filter(item => item.run.dq).length : Number(Boolean(chosen.run.dq));
-    return [{...values, athlete, maxDistance:distances.length ? Math.max(...distances) : null, run:chosen.run, disqualified}];
+    const pool = state.mode === 'mean' && matched.some(item => item.run.pool !== chosen.run.pool) ? 'mixed' : chosen.run.pool;
+    return [{...values, athlete, pool, maxDistance:distances.length ? Math.max(...distances) : null, run:chosen.run, disqualified}];
   }).sort((a,b)=>a.athlete.name.localeCompare(b.athlete.name,'en') || a.athlete.id.localeCompare(b.athlete.id));
   const get = compareFields[state.sort].get;
   const rows = [...chartRows].sort((a,b) => {
@@ -458,7 +459,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
   const hasRanks = [...scales.values()].some(scale => scale.size);
   const axisFields = state.axes.map(key=>compareFields[key]);
   const points = axisFields.length === 2 ? chartRows.map(row=>({
-    id: row.athlete.id, name: row.athlete.name, sex: row.athlete.sex, x: axisFields[0].get(row), y: axisFields[1].get(row),
+    id: row.athlete.id, name: row.athlete.name, sex: row.athlete.sex, pool: row.pool, x: axisFields[0].get(row), y: axisFields[1].get(row),
   })).filter(point=>measured(point.x) && measured(point.y)) : [];
   const plotTitle = axisFields.length === 2 ? axisFields.map(field => field.label).join(' vs ') : 'Scatter plot';
   const [presetId, preset] = Object.entries(scatterPresets).find(([, item]) =>
@@ -481,7 +482,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
       ${titleRow('Filters', '', `<button class="text-button" type="button" data-action="reset-comparison" ${filtersChanged ? '' : 'disabled'}>${icon('reset')} Reset filters</button>`, 'compare-filters-title')}
       <div class="filters">
         <label>Distance<select id="compare-scope">${options([['25','25 m'],['50','50 m'],['100','100 m'],['150','150 m'],['200','200 m'],['total','Full attempt']],state.scope)}</select></label>
-        <label>Pool<select id="compare-pool">${options([[50,'50 m'],[25,'25 m']],state.pool)}</select></label>
+        <label>Pool<select id="compare-pool">${options([[50,'50 m'],[25,'25 m'],['all','All']],state.pool)}</select></label>
         <label>Competition<select id="compare-competition">${options([['','All'],...competitions],state.competition)}</select></label>
         <label>Country<select id="compare-country">${options([['','All'],...countries.map(v=>[v,v])],state.country)}</select></label>
         <label>Aggregation<select id="compare-mode">${options([['latest','Latest comparable'],['best','Best comparable'],['mean','Athlete average']],state.mode)}</select></label>
@@ -491,7 +492,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
     </section>
     <div class="comparison-layout">
       <section class="panel compare-table">
-        ${titleRow('Comparison', `${rows.length} ${rows.length === 1 ? 'athlete' : 'athletes'} / ${state.scope === 'total' ? 'full attempt' : 'first ' + state.scope + ' m'} / ${state.pool} m pool`,
+        ${titleRow('Comparison', `${rows.length} ${rows.length === 1 ? 'athlete' : 'athletes'} / ${state.scope === 'total' ? 'full attempt' : 'first ' + state.scope + ' m'} / ${state.pool === 'all' ? 'all pools' : state.pool + ' m pool'}`,
           `<div class="heading-actions">
             <button class="text-button compare-jump" type="button" data-jump-to="compare-plot-title">${icon('chart')} View plot</button>
             <button class="text-button" type="button" data-action="export-comparison" ${rows.length ? '' : 'disabled'}>${icon('download')} Export CSV</button>
@@ -528,6 +529,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
           </select></label>
           ${preset ? `<p id="scatter-preset-note">${esc(preset.note)}</p>` : ''}
         </div>
+        ${points.length ? `<p class="scatter-pool-key">■ 25 m &nbsp; ● 50 m${points.some(point => point.pool === 'mixed') ? ' &nbsp; ◆ Mixed-pool average' : ''}</p>` : ''}
         ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric')}
         <div class="axis-controls">${axisSelect(0)}${axisSelect(1)}</div>
       </section>

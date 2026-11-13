@@ -1407,7 +1407,7 @@ document.addEventListener('click', async event => {
     }
     if (d.choosePhoto) return await choosePhoto(athletes.find(a=>a.id===d.choosePhoto));
     if (d.editAthlete) editAthlete(athletes.find(a=>a.id===d.editAthlete));
-    if (d.newFor) enterRun(newRun({athleteId:d.newFor,pool:profiles.pool}),true);
+    if (d.newFor) enterRun(newRun({athleteId:d.newFor,pool:profiles.pool === 'all' ? run.pool : profiles.pool}),true);
     if (d.profileRun) {
       profiles.runId=d.profileRun;
       route();
@@ -1455,7 +1455,7 @@ document.addEventListener('change',event=>{
   }
   if (Object.hasOwn(compareControls,id)) {
     const key=compareControls[id];
-    compare[key]=input.type==='checkbox' ? input.checked : key==='pool' ? Number(input.value) : input.value;
+    compare[key]=input.type==='checkbox' ? input.checked : key==='pool' && input.value !== 'all' ? Number(input.value) : input.value;
     if (key==='pool') compare.competition='';
     route();
     $('#'+id)?.focus();
@@ -1463,7 +1463,7 @@ document.addEventListener('change',event=>{
   }
   if (Object.hasOwn(profileControls,id)) {
     const key=profileControls[id];
-    profiles[key]=key==='pool' ? Number(input.value) : input.value;
+    profiles[key]=key==='pool' && input.value !== 'all' ? Number(input.value) : input.value;
     route();
     $('#'+id)?.focus();
     return;

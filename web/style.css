@@ -750,7 +750,7 @@ tbody tr:last-child > * { border-bottom: 0; }
 .compare-table .section-title { padding: var(--panel-padding); flex-wrap: wrap; }
 .axis-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-block: 12px; }
 .scatter-presets { margin-block-start: 12px; }
-.scatter-presets p { margin-block-start: 4px; color: var(--muted); font-size: var(--text-xs); }
+.scatter-presets p, .scatter-pool-key { margin-block-start: 4px; color: var(--muted); font-size: var(--text-xs); }
 .compare-jump { display: none; }
 .compare-table .empty { border-radius: 0 0 var(--radius) var(--radius); }
 .profile-body > .panel:only-child > .empty { border-radius: var(--radius); }
