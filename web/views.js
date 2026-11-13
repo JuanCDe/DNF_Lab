@@ -17,11 +17,8 @@ const unit = (value, suffix, digits = 2) => measured(value) ? num(value, digits)
 const metricHelp = (id, label, definition) => `<button type="button" class="metric-help" popovertarget="help-${id}"
   aria-label="About ${esc(label)}">${icon('help')}</button><div id="help-${id}" class="metric-tooltip" popover>${esc(definition)}</div>`;
 const strokeIntervalHelp = 'S marks mid-stroke. S–S is the elapsed time between consecutive stroke marks within a pool length.';
-const kickPhaseHelp = 'K phase is how far through an S–S cycle the kick ends. S marks mid-stroke and K marks the end of the kick. Divide the time from the first S to K by the time from the first S to the next S, then multiply by 100. For example, a kick ending 1 s into a 4 s cycle has a K phase of 25%. The app reports a phase when exactly one eligible kick ends strictly between the two strokes. Extra, push-off and wall-approach kicks are excluded.';
+const kickPhaseHelp = 'The percentage of the full S–S cycle that has elapsed when the kick ends. S–S runs from one mid-stroke mark to the next. A kick ending 1 s into a 4 s cycle has a phase of 25%. The app reports a phase only when exactly one eligible kick ends between those marks.';
 const pairDefinitions = {
-  eq: 'Add the number of strokes and kicks, then divide by two.',
-  pairs: 'A complete cycle pairs a stroke with an eligible kick within the segment.',
-  metresPerEq: 'Distance divided by equivalent cycles.',
   strokeInterval: strokeIntervalHelp + ' Both stroke marks must be within the same 25 m segment.',
   kickPhase: kickPhaseHelp,
 };
@@ -409,8 +406,7 @@ function profileAttempt(run, splitMode, sex, eventDate) {
 
 const compareFields = {
   name: { label: 'Athlete', get: row => row.athlete.name },
-  maxDistance: { label: 'Max distance', get: row => row.maxDistance, unit: 'm', better: 1,
-    detail: 'Longest analyzed distance in the selected pool, across competitions' },
+  maxDistance: { label: 'Max distance', get: row => row.maxDistance, unit: 'm', better: 1 },
   time: { label: 'Time', get: row => row.time, unit: 's', digits: 2, time: true, better: -1, splitOnly: true },
   speed: { label: 'Speed', get: row => row.speed, unit: 'm/s', digits: 3, better: 1, splitOnly: true },
   eq: { label: 'Eq. cycles', get: row => row.eq, unit: 'cycles', digits: 1 },
@@ -565,7 +561,7 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
         ${rows.length ? `<div class="table-wrap" tabindex="0" role="region" aria-label="Comparison table"><table><thead><tr>${compareColumns.map(([key,field])=>{
           const sorted = state.sort === key;
           return `<th scope="col"${sorted ? ' aria-sort="' + (state.direction > 0 ? 'ascending' : 'descending') + '"' : ''}>
-            <div class="column-controls"><span data-column-label>${field.label}</span>${field.detail ? metricHelp('max-distance', field.label, field.detail) : ''}
+            <div class="column-controls"><span data-column-label>${field.label}</span>
             <button type="button" class="sort-column" data-sort="${key}" aria-label="Sort by ${field.label}" title="Sort by ${field.label}">
               ${icon(sorted ? (state.direction > 0 ? 'sortUp' : 'sortDown') : 'sort')}</button></div>
           </th>`;
