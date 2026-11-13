@@ -19,7 +19,7 @@ const provisionalAthletes = new Map();
 const undoStack = new Map();
 const profiles = { id: '', runId: '', pool: 50, metric: 'distance', split: '50', query: '' };
 const comparisonFilters = { scope: '100', pool: 50, country: '', competition: '', mode: 'latest', query: '', dq: true };
-const compare = { ...comparisonFilters, axes: ['eq','speed'], sort: 'time', direction: 1, pinned: new Set() };
+const compare = { ...comparisonFilters, axes: ['eq','speed'], sort: 'time', direction: 1, pinned: new Set(), pair: ['', ''] };
 const playback = { rate: 1, step: 5, fps: 50, muted: false };
 const shortSkip = .5;
 const markShortcuts = Object.fromEntries(Object.entries(eventKeys)
@@ -1437,6 +1437,14 @@ document.addEventListener('change',event=>{
   if (!run) return;
   const input=event.target;
   const id=input.id;
+  if (input.matches('select[data-pair-index]')) {
+    const index = Number(input.dataset.pairIndex);
+    if (compare.pair[1 - index] === input.value) compare.pair[1 - index] = '';
+    compare.pair[index] = input.value;
+    route();
+    $('#' + id)?.focus({ preventScroll: true });
+    return;
+  }
   if (id === 'scatter-preset' && Object.hasOwn(scatterPresets, input.value)) {
     const preset = scatterPresets[input.value];
     compare.axes = [...preset.axes];

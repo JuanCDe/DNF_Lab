@@ -422,6 +422,54 @@ function qualityScale(rows, field, fixedSplit) {
   return new Map(values.map((value,index) => [value, 100 * index / (values.length - 1)]));
 }
 
+function headToHead(rows, state, competitionDate) {
+  const selection = state.pair ?? [];
+  const selected = selection.map(id => rows.find(row => row.athlete.id === id));
+  const select = index => `<label>Athlete ${index + 1}<select id="pair-athlete-${index + 1}" data-pair-index="${index}">
+    ${options([['', 'Select an athlete'], ...rows
+      .filter(row => row.athlete.id !== selected[1 - index]?.athlete.id)
+      .map(({athlete}) => [athlete.id, [athlete.name, athlete.country].filter(Boolean).join(' / ')])],
+    selected[index]?.athlete.id ?? '')}
+  </select></label>`;
+  let results = empty('compare', rows.length < 2 ? 'Fewer than two comparable athletes' : 'Select two athletes',
+    rows.length < 2 ? 'Adjust the comparison filters to include more athletes.' : 'Compare the recorded splits for each 25 m segment.');
+  if (selected.length === 2 && selected.every(Boolean)) {
+    const series = selected.map(row => (state.mode === 'mean' ? row.matchedRuns : [row.run])
+      .map(run => analyze(run, { compareSplits: true }).splits25));
+    const distances = [...new Set(series.flatMap(attempts => attempts.flatMap(splits => [...splits.keys()])))]
+      .sort((a, b) => a - b);
+    const columns = [
+      ['time', 'Time', value => clock(value)],
+      ['speed', 'Speed', value => unit(value, 'm/s', 3)],
+      ['eq', 'Eq. cycles', value => num(value, 1)],
+      ['pairs', 'Complete cycles', value => num(value, 1)],
+      ['metresPerEq', 'm/eq. cycle', value => unit(value, 'm')],
+      ['strokeInterval', 'Mean S–S', seconds],
+      ['kickPhase', 'Mean K phase', value => unit(value, '%', 1)],
+    ];
+    results = distances.length ? `<div class="table-wrap pair-table" tabindex="0" role="region" aria-label="25 m split comparison">
+      <table><thead><tr><th scope="col">Split</th><th scope="col">Athlete</th>
+        ${columns.map(([,label]) => `<th scope="col">${label}</th>`).join('')}</tr></thead>
+        ${distances.map(to => `<tbody>${selected.map((row, index) => `<tr>
+          ${index === 0 ? `<th scope="rowgroup" rowspan="2">${to - 25}–${to} m</th>` : ''}
+          <th scope="row">${esc(row.athlete.name)}</th>
+          ${columns.map(([key,,format]) => `<td>${format(mean(series[index].map(splits => splits.get(to)?.[key])))}</td>`).join('')}
+        </tr>`).join('')}</tbody>`).join('')}
+      </table></div>` : empty('chart', 'No recorded 25 m splits', 'A split needs measurements at both ends.');
+  }
+  return `<section class="panel chart-panel pair-comparison" aria-labelledby="pair-comparison-title">
+    ${titleRow('Athlete comparison', '25 m segments from comparable attempts', '', 'pair-comparison-title')}
+    <div class="axis-controls">${select(0)}${select(1)}</div>
+    ${selected.filter(Boolean).length === 2 ? `<ul class="pair-sources">${selected.map(row => `<li>
+      <strong>${esc(row.athlete.name)}</strong> /
+      ${state.mode === 'mean' ? `Average of ${row.matchedRuns.length} ${row.matchedRuns.length === 1 ? 'attempt' : 'attempts'}`
+        : `${esc(row.run.competition || 'Untitled session')} / ${date(competitionDate(row.run))} / ${row.run.pool} m pool`}
+    </li>`).join('')}</ul>` : ''}
+    ${results}
+    <p class="pair-note">A dash indicates missing measurements. S–S uses stroke intervals contained within the segment.</p>
+  </section>`;
+}
+
 export function comparison(athletes, runs, state, filtersChanged, competitionDate) {
   const countries = [...new Set(athletes.map(a=>a.country).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'en'));
   const competitions = [...competitionNames(runs.filter(run => (state.pool === 'all' || run.pool === state.pool)))]
@@ -447,7 +495,8 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
     const distances = eligible.map(({total})=>total.distance).filter(positive);
     const disqualified = state.mode === 'mean' ? matched.filter(item => item.run.dq).length : Number(Boolean(chosen.run.dq));
     const pool = state.mode === 'mean' && matched.some(item => item.run.pool !== chosen.run.pool) ? 'mixed' : chosen.run.pool;
-    return [{...values, athlete, pool, maxDistance:distances.length ? Math.max(...distances) : null, run:chosen.run, disqualified}];
+    return [{...values, athlete, pool, maxDistance:distances.length ? Math.max(...distances) : null, run:chosen.run, disqualified,
+      matchedRuns: state.mode === 'mean' ? matched.map(item => item.run) : null}];
   }).sort((a,b)=>a.athlete.name.localeCompare(b.athlete.name,'en') || a.athlete.id.localeCompare(b.athlete.id));
   const get = compareFields[state.sort].get;
   const rows = [...chartRows].sort((a,b) => {
@@ -533,5 +582,6 @@ export function comparison(athletes, runs, state, filtersChanged, competitionDat
         ${axisFields.length === 2 ? scatter(points,axisFields,state.pinned) : empty('chart','Select an X and Y metric')}
         <div class="axis-controls">${axisSelect(0)}${axisSelect(1)}</div>
       </section>
+      ${headToHead(chartRows, state, competitionDate)}
     </div>`;
 }

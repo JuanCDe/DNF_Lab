@@ -220,7 +220,7 @@ function effort(distance, time, stats) {
   };
 }
 
-export function analyze(run) {
+export function analyze(run, { compareSplits = false } = {}) {
   const events = run.events ?? [];
   const start = events.find(event => event.type === 'i');
   const finish = events.find(event => event.type === 'f');
@@ -294,12 +294,46 @@ export function analyze(run) {
   if (invalidDistance) warnings.push('Final distance is shorter than the last checkpoint.');
   if (finish && !distance) warnings.push('Enter the final distance for a finish between checkpoints.');
   if (invalidTime) warnings.push('Manual finish time is earlier than the last checkpoint.');
+  const technique = techniqueTiming(events, positions);
+  const splits25 = new Map();
+  if (compareSplits) {
+    const checkpoints = new Map();
+    for (const [goal, summary] of Object.entries(run.checkpoints ?? {})) checkpoints.set(Number(goal), summary);
+    checkpoints.set(0, { ...zero, eq: 0 });
+    for (const anchor of splitAnchors) {
+      const summary = checkpoints.get(anchor.distance);
+      checkpoints.set(anchor.distance, { ...summary, ...anchor, time: anchor.time ?? summary?.time });
+    }
+    if (positive(distance) && !checkpoints.has(distance) && positive(time)) checkpoints.set(distance, { time });
+
+    const eventIndices = new Map(events.map((event, index) => [event.id, index]));
+    const cycles = technique.lengths.flatMap(length => length.cycles);
+    for (const [to, end] of checkpoints) {
+      if (to <= 0 || to % 25 !== 0) continue;
+      const from = to - 25;
+      const begin = checkpoints.get(from);
+      if (!begin) continue;
+      const splitTime = elapsed(end.time, begin.time);
+      const recorded = Number.isInteger(end.index) && Number.isInteger(begin.index) && end.index > begin.index;
+      const stats = recorded && movementData
+        ? movementStats(events.slice(begin.index + 1, end.index + 1), times, positions)
+        : { eq: elapsed(end.eq, begin.eq) };
+      if (!positive(splitTime) && !measured(stats.eq)) continue;
+      const splitCycles = recorded ? cycles.filter(cycle =>
+        eventIndices.get(cycle.from.id) > begin.index && eventIndices.get(cycle.to.id) <= end.index) : [];
+      splits25.set(to, {
+        ...effort(25, positive(splitTime) ? splitTime : null, stats),
+        strokeInterval: mean(splitCycles.map(cycle => cycle.duration)),
+        kickPhase: mean(splitCycles.map(cycle => cycle.kickPhase)),
+      });
+    }
+  }
   return {
     ...effort(distance, time, stats), t0, videoTime, lastDistance, videoEnd: finish?.t ?? null,
     movementData, inconsistent: invalidDistance || invalidTime,
     finished: Boolean(finish && start || finishedManually || run.origin === 'legacy' && events.length > 1
       || run.origin === 'summary' || run.origin === 'official'),
-    fixed, splits, splits50, positions, times, walls, warnings, ...techniqueTiming(events, positions),
+    fixed, splits, splits50, splits25, positions, times, walls, warnings, ...technique,
     firstArmTime: times.get(firstArm?.id) ?? null,
     firstKickTime: times.get(firstKick?.id) ?? null,
     firstArmDistance: positions.get(firstArm?.id) ?? null,
